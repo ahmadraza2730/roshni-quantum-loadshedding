@@ -2,6 +2,7 @@
 
 **Solar-aware, fair load-shedding scheduled with QAOA in Qiskit.**
 Qiskit Fall Fest 2026 Hackathon · Domain: **Energy & Smart Infrastructure**
+Team: Muhammad Adeen Saghar, Muhammad Ahmad, Atta Ur Rehman · Live demo: https://roshni-quantum.vercel.app
 
 Pakistan's distribution companies cut power to feeders every day when supply falls short.
 Two things make that schedule worse than it needs to be:

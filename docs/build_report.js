@@ -62,7 +62,7 @@ const children = [
   new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun("Roshni: Who Gets the Light?")] }),
   P([new TextRun({ text: "Solar-aware, fair load-shedding scheduled with QAOA in Qiskit", size: 26, color: "52514E" })]),
   P([B("Qiskit Fall Fest 2026 Hackathon"), new TextRun("  ·  Domain: Energy & Smart Infrastructure")]),
-  P([B("Team: "), new TextRun("[Member 1], [Member 2], [Member 3]")]),
+  P([B("Team: "), new TextRun("Muhammad Adeen Saghar, Muhammad Ahmad, Atta Ur Rehman")]),
   P([B("Repository: "), new TextRun("https://github.com/ahmadraza2730/roshni-quantum-loadshedding")]),
 
   H1("Summary"),
