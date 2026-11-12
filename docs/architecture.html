@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#fcfcfb;font:14px/1.35 Arial,Helvetica,sans-serif;color:#0b0b0b}
+.wrap{width:1200px;padding:26px 30px}
+h1{font-size:20px;margin:0 0 16px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{flex:1;display:flex;flex-direction:column;gap:10px}
+.lane{font-size:11px;font-weight:bold;letter-spacing:.8px;color:#52514e;text-transform:uppercase;margin-bottom:2px}
+.box{border:1.5px solid #c9c8c2;border-radius:8px;padding:9px 11px;background:#fff}
+.box b{display:block;font-size:13.5px;margin-bottom:2px}
+.box span{font-size:12px;color:#52514e}
+.q{border-color:#2a78d6;background:#eef4fc}
+.c{border-color:#1baf7a;background:#ecf8f3}
+.o{border-color:#eb6834;background:#fdf1ec}
+.arrow{width:46px;display:flex;align-items:center;justify-content:center;color:#52514e;font-size:26px}
+.loop{margin-top:6px;border:1.5px dashed #2a78d6;border-radius:8px;padding:6px 10px;font-size:12px;color:#1d4f8f;text-align:center}
+.key{margin-top:18px;font-size:12px;color:#52514e;display:flex;gap:20px}
+.key i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+</style></head><body><div class="wrap">
+<h1>Roshni: system architecture</h1>
+<div class="row">
+ <div class="col">
+  <div class="lane">1 · Inputs</div>
+  <div class="box"><b>Feeder data</b><span>gross demand per block, rooftop solar, customers, off-grid/battery backup share, payment recovery</span></div>
+  <div class="box"><b>Grid shortfall</b><span>MW to shed in each block</span></div>
+  <div class="box"><b>Policy</b><span>protected feeders (hospital), objective weights</span></div>
+ </div>
+ <div class="arrow">&#10140;</div>
+ <div class="col">
+  <div class="lane">2 · Model</div>
+  <div class="box c"><b>Net load</b><span>net = demand − solar (solar switches off with the cut)</span></div>
+  <div class="box c"><b>QuadraticProgram</b><span>9 binaries x[f,t]; revenue + fairness² + back-to-back; cover-shortfall ≥ constraints</span></div>
+  <div class="box c"><b>Unbalanced penalty QUBO</b><span>−λ₁g + λ₂g², no slack qubits: 9 instead of 19</span></div>
+ </div>
+ <div class="arrow">&#10140;</div>
+ <div class="col">
+  <div class="lane">3 · Quantum core (Qiskit)</div>
+  <div class="box q"><b>Ising Hamiltonian H<sub>C</sub></b><span>to_ising() → SparsePauliOp</span></div>
+  <div class="box q"><b>QAOAAnsatz, p = 4</b><span>9 qubits, transpiled to h / rx / rz / rzz</span></div>
+  <div class="box q"><b>Statevector simulation</b><span>CVaR(α = 0.1) cost of measured outcomes</span></div>
+  <div class="loop">&#8635; COBYLA updates (β, γ) · linear-ramp start</div>
+  <div class="box q"><b>StatevectorSampler</b><span>4096 shots → schedule distribution</span></div>
+ </div>
+ <div class="arrow">&#10140;</div>
+ <div class="col">
+  <div class="lane">4 · Decode &amp; validate</div>
+  <div class="box o"><b>Decode</b><span>bitstring → schedule; keep best feasible</span></div>
+  <div class="box o"><b>Exact baseline</b><span>brute force over all 512 schedules</span></div>
+  <div class="box o"><b>Status-quo baselines</b><span>worst-paying-first; solar-blind rotation</span></div>
+ </div>
+ <div class="arrow">&#10140;</div>
+ <div class="col">
+  <div class="lane">5 · Outputs</div>
+  <div class="box"><b>Schedule</b><span>which feeder is cut in which block</span></div>
+  <div class="box"><b>Metrics</b><span>shortfall met, people-hours dark, fairness gap, wasted cuts</span></div>
+  <div class="box"><b>Charts + city demo</b><span>results/*.png, demo/index.html</span></div>
+ </div>
+</div>
+<div class="key"><span><i style="background:#ecf8f3;border:1.5px solid #1baf7a"></i>classical modelling (qiskit-optimization)</span><span><i style="background:#eef4fc;border:1.5px solid #2a78d6"></i>hybrid quantum-classical loop</span><span><i style="background:#fdf1ec;border:1.5px solid #eb6834"></i>classical validation</span></div>
+</div></body></html>

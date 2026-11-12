@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roshni: who gets the light?</title>
+<style>
+  :root{--bg:#0e1116;--panel:#161b22;--ink:#f0efec;--ink2:#a9b1bb;--muted:#5b6470;
+        --sun:#f4b740;--lit:#ffd36b;--dark:#1d232b;--good:#1baf7a;--bad:#e34948;--blue:#3987e5}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:22px 32px 6px}
+  h1{margin:0;font-size:26px;letter-spacing:.2px}
+  h1 span{color:var(--lit)}
+  .sub{color:var(--ink2);margin-top:4px}
+  .controls{display:flex;gap:10px;align-items:center;padding:10px 32px 4px;flex-wrap:wrap}
+  button{background:var(--panel);color:var(--ink);border:1px solid #2a313b;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+  button.on{background:var(--blue);border-color:var(--blue)}
+  .clock{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--ink2)}
+  .clock b{color:var(--ink);font-size:20px}
+  .sky{height:6px;margin:6px 32px 0;border-radius:3px;background:linear-gradient(90deg,#f4b740,#f4b740 55%,#3b3f8f 75%,#151a3a);position:relative}
+  .sky i{position:absolute;top:-5px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 0 10px #fff;transition:left .8s}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:16px 32px 28px}
+  .panel{background:var(--panel);border-radius:14px;padding:16px 18px;border:1px solid #222a33}
+  .panel h2{margin:0 0 2px;font-size:17px}
+  .panel .tag{font-size:12px;color:var(--ink2)}
+  .city{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 10px}
+  .area{border-radius:10px;padding:10px 8px 8px;background:#0f1318;border:1px solid #232a33;text-align:center;transition:background .6s}
+  .area .nm{font-size:12px;color:var(--ink2);min-height:32px}
+  .houses{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:6px 0}
+  .h{width:16px;height:14px;border-radius:2px 2px 1px 1px;background:var(--lit);box-shadow:0 0 8px rgba(255,211,107,.55);position:relative;transition:all .6s}
+  .h.solar::before{content:"";position:absolute;left:2px;right:2px;top:-4px;height:3px;background:#3d6fd6;border-radius:1px}
+  .h.bat::after{content:"";position:absolute;right:-3px;bottom:1px;width:3px;height:6px;background:var(--good);border-radius:1px}
+  .area.cut .h{background:var(--dark);box-shadow:none}
+  .area.cut .h.bat{background:#8a7a3f;box-shadow:0 0 4px rgba(255,211,107,.3)}
+  .area.cut{background:#0a0c10}
+  .st{font-size:12px;font-weight:600}
+  .st.cut{color:var(--bad)} .st.on{color:var(--good)} .st.waste{color:#ff9a7a}
+  .net{font-size:11px;color:var(--muted)}
+  .meter{display:flex;justify-content:space-between;gap:10px;margin-top:8px}
+  .m{flex:1;background:#0f1318;border-radius:10px;padding:8px 10px}
+  .m .k{font-size:11px;color:var(--ink2)} .m .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .v.bad{color:var(--bad)} .v.good{color:var(--good)}
+  .bars{margin-top:10px}
+  .bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);margin:3px 0}
+  .bar .lab{width:120px} .bar .tr{flex:1;height:10px;background:#0f1318;border-radius:5px;overflow:hidden}
+  .bar .fl{display:block;height:100%;background:var(--blue);border-radius:5px;transition:width .6s}
+  .legend{color:var(--ink2);font-size:12px;padding:16px 32px 0;display:flex;gap:18px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .foot{padding:0 32px 26px;color:var(--ink2);font-size:13px}
+  .foot b{color:var(--ink)}
+  .q{display:inline-block;padding:2px 8px;border-radius:999px;background:#1d2a44;color:#9cc0ff;font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Roshni <span>&#9679;</span> who gets the light?</h1>
+  <div class="sub">Solar-aware, fair load-shedding scheduled by QAOA (Qiskit), compared with today's rule.</div>
+</header>
+<div class="controls">
+  <button id="play" class="on">&#9654; Play day</button>
+  <button data-s="0">11am-1pm</button><button data-s="1">3pm-5pm</button><button data-s="2">7pm-9pm</button><button id="cmp">Compare: solar-blind rotation</button>
+  <div class="clock">Block: <b id="clk">-</b> &nbsp; Shortfall to cover: <b id="def">-</b> MW</div>
+</div>
+<div class="sky"><i id="sun"></i></div>
+<div class="legend">
+  <span><i class="h" style="display:inline-block"></i> home with power</span>
+  <span><i class="h solar" style="display:inline-block"></i> rooftop solar (switches off when the feeder is cut)</span>
+  <span><i class="h bat" style="display:inline-block"></i> battery / off-grid backup</span>
+</div>
+<div class="grid">
+  <div class="panel" id="A"></div>
+  <div class="panel" id="B"></div>
+</div>
+<div class="foot" id="foot"></div>
+<script>
+const R = {"instance": {"feeders": [{"id": "SUN", "name": "Sunview Housing", "desc": "well-off sector, heavy rooftop solar", "demand": [4, 5, 7], "solar": [2, 6, 0], "customers": 3000, "backup": 0.4, "recovery": 0.95}, {"id": "IND", "name": "Industrial Estate", "desc": "factories and workshops", "demand": [6, 6, 5], "solar": [1, 2, 0], "customers": 2000, "backup": 0.1, "recovery": 0.9}, {"id": "OLD", "name": "Old Town", "desc": "dense low-income area, no solar", "demand": [3, 4, 6], "solar": [0, 0, 0], "customers": 6000, "backup": 0.0, "recovery": 0.6}], "slots": ["11am-1pm", "3pm-5pm", "7pm-9pm"], "deficit": [4, 4, 8], "weights": {"revenue": 1.0, "pain": 1.0, "backtoback": 3.0}}, "exact": {"objective": 33.05, "feasible": true, "relief_MW": [5, 4, 12], "deficit_MW": [4, 4, 8], "shortfall_MW": [0, 0, 0], "outage_blocks": {"SUN": 1, "IND": 2, "OLD": 1}, "max_minus_min_blocks": 1, "wasted_cuts": 0, "people_hours_dark": 22800, "schedule": [[0, 0, 1], [1, 0, 1], [0, 1, 0]], "bitstring": "001101010", "feasible_count": 80}, "status_quo_loss_based": {"objective": 84.0, "feasible": true, "relief_MW": [8, 4, 11], "deficit_MW": [4, 4, 8], "shortfall_MW": [0, 0, 0], "outage_blocks": {"SUN": 0, "IND": 2, "OLD": 3}, "max_minus_min_blocks": 3, "wasted_cuts": 0, "people_hours_dark": 43200, "schedule": [[0, 0, 0], [1, 0, 1], [1, 1, 1]]}, "solar_blind_rotation": {"objective": 32.75, "feasible": false, "relief_MW": [5, -1, 13], "deficit_MW": [4, 4, 8], "shortfall_MW": [0, 5, 0], "outage_blocks": {"SUN": 2, "IND": 1, "OLD": 1}, "max_minus_min_blocks": 1, "wasted_cuts": 1, "people_hours_dark": 22800, "schedule": [[0, 1, 1], [1, 0, 0], [0, 0, 1]]}, "qaoa": {"objective": 33.05, "feasible": true, "relief_MW": [5, 4, 12], "deficit_MW": [4, 4, 8], "shortfall_MW": [0, 0, 0], "outage_blocks": {"SUN": 1, "IND": 2, "OLD": 1}, "max_minus_min_blocks": 1, "wasted_cuts": 0, "people_hours_dark": 22800, "schedule": [[0, 0, 1], [1, 0, 1], [0, 1, 0]], "bitstring": "001101010", "num_qubits": 9, "slack_encoding_qubits": 19, "reps": 4, "depth": 37, "penalty": [4, 0.5], "p_optimum": 0.10107421875, "rank_of_optimum": 1, "p_feasible": 0.4443359375, "gap_to_exact_percent": 0.0, "optimizer_evals": 125}, "depth_sweep": [{"reps": 1, "p_opt": 0.017366424480366696, "feasible_mass": 0.2538311516332763}, {"reps": 2, "p_opt": 0.05298927749038826, "feasible_mass": 0.4126448081519415}, {"reps": 3, "p_opt": 0.08457717150453488, "feasible_mass": 0.47087457720635184}, {"reps": 4, "p_opt": 0.10021679979417517, "feasible_mass": 0.4444860840424827}, {"reps": 5, "p_opt": 0.10025043129116092, "feasible_mass": 0.4387593844147378}, {"reps": 6, "p_opt": 0.10133491703621927, "feasible_mass": 0.4457381110900436}], "runtime_s": 41.4};
+const F = R.instance.feeders, SL = R.instance.slots, DEF = R.instance.deficit;
+const plans = {
+  A:{title:"Today: cut the worst-paying areas first", tag:"Solar-blind utility rule", d:R.status_quo_loss_based},
+  B:{title:"Roshni (QAOA, 9 qubits)", tag:"Solar-aware + fair. Matches exact optimum", d:R.qaoa}
+};
+const net = f => f.demand.map((d,i)=>d-f.solar[i]);
+function houses(f){
+  const n = Math.round(f.customers/400), out=[];
+  const sol = Math.round(n * (f.solar.reduce((a,b)=>a+b,0)>0 ? (f.id==="SUN"?.7:.25):0));
+  const bat = Math.round(n*f.backup);
+  for(let i=0;i<n;i++){out.push(`<i class="h${i<sol?' solar':''}${i<bat?' bat':''}"></i>`)}
+  return out.join("");
+}
+function render(s){
+  document.getElementById("clk").textContent = SL[s];
+  document.getElementById("def").textContent = DEF[s];
+  document.getElementById("sun").style.left = (s===0?"20%":s===1?"52%":"88%");
+  for(const k of ["A","B"]){
+    const p = plans[k], sch = p.d.schedule; let relief = 0;
+    const blocks = F.map((f,fi)=>sch[fi].slice(0,s+1).reduce((a,b)=>a+b,0));
+    let areas = F.map((f,fi)=>{
+      const cut = sch[fi][s]===1, nl = net(f)[s]; if(cut) relief += nl;
+      const st = cut ? (nl<=0?'<span class="st waste">CUT, saves nothing (solar lost)</span>':'<span class="st cut">CUT</span>') : '<span class="st on">ON</span>';
+      return `<div class="area${cut?' cut':''}"><div class="nm">${f.name}<br>${f.desc}</div>
+        <div class="houses">${houses(f)}</div>${st}<div class="net">net load ${nl} MW</div></div>`;
+    }).join("");
+    areas += `<div class="area"><div class="nm">City Hospital<br>protected</div><div class="houses"><i class="h"></i><i class="h"></i><i class="h"></i></div><span class="st on">ALWAYS ON</span><div class="net">never shed</div></div>`;
+    const ok = relief >= DEF[s];
+    let ph = 0; F.forEach((f,fi)=>{ph += blocks[fi]*2*f.customers*(1-f.backup)});
+    const mx = Math.max(...blocks), mn = Math.min(...blocks);
+    const bars = F.map((f,fi)=>`<div class="bar"><span class="lab">${f.name}</span><span class="tr"><span class="fl" style="width:${blocks[fi]/3*100}%"></span></span><span>${blocks[fi]} block${blocks[fi]===1?"":"s"}</span></div>`).join("");
+    document.getElementById(k).innerHTML = `<h2>${p.title}${k==="B"?'<span class="q">quantum</span>':''}</h2><div class="tag">${p.tag}</div>
+      <div class="city">${areas}</div>
+      <div class="meter">
+        <div class="m"><div class="k">Power relieved / needed</div><div class="v ${ok?'good':'bad'}">${relief} / ${DEF[s]} MW</div></div>
+        <div class="m"><div class="k">People-hours in the dark (so far)</div><div class="v">${Math.round(ph).toLocaleString()}</div></div>
+        <div class="m"><div class="k">Outage gap, most vs least hit</div><div class="v ${mx-mn>1?'bad':'good'}">${mx-mn} block${mx-mn===1?"":"s"}</div></div>
+      </div><div class="bars">${bars}</div>`;
+  }
+  const q = R.qaoa;
+  document.getElementById("foot").innerHTML =
+    `QAOA: <b>${q.num_qubits} qubits</b> (a standard encoding would need ${q.slack_encoding_qubits}), p=${q.reps}. Found the exact optimum <b>${q.bitstring}</b> as its most likely outcome, `+
+    `P = ${(q.p_optimum*100).toFixed(1)}% (${Math.round(q.p_optimum*512)}x random guessing). Verified against brute force over all 512 schedules. `+
+    `A solar-blind fair rotation cuts Sunview at 3pm, when its solar covers its demand, and leaves a ${R.solar_blind_rotation.shortfall_MW.reduce((a,b)=>a+b,0)} MW gap.`;
+}
+document.getElementById("cmp").onclick = (e)=>{
+  const alt = plans.A.d === R.status_quo_loss_based;
+  plans.A = alt ? {title:"Fair rotation, but solar-blind", tag:"Plans with gross demand: ignores that solar switches off", d:R.solar_blind_rotation}
+                : {title:"Today: cut the worst-paying areas first", tag:"Solar-blind utility rule", d:R.status_quo_loss_based};
+  e.target.textContent = alt ? "Compare: worst-paying-first rule" : "Compare: solar-blind rotation";
+  render(s);
+};
+let s=0, timer=null;
+function play(){ clearInterval(timer); s=0; render(s); timer=setInterval(()=>{ s++; if(s>2){clearInterval(timer);document.getElementById("play").classList.remove("on");return;} render(s); },2600); document.getElementById("play").classList.add("on"); }
+document.getElementById("play").onclick = play;
+document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{clearInterval(timer);document.getElementById("play").classList.remove("on");render(+b.dataset.s)});
+play();
+</script>
+</body>
+</html>
