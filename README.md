@@ -29,7 +29,11 @@ The solar-blind rotation scores 32.75, below the optimum, only because it breaks
 ![schedules](results/schedule_comparison.png)
 ![histogram](results/qaoa_histogram.png)
 
-## Setup and run (Windows, macOS or Linux, Python 3.10–3.13)
+## Setup and run
+
+**Windows, one click:** double-click `setup_windows.bat`. It finds or installs Python 3.12, creates a virtual environment outside OneDrive, installs Qiskit, runs the project and opens the demo. After that, `run_windows.bat` re-runs it.
+
+**Manual (Windows, macOS or Linux, Python 3.10–3.13):**
 
 ```bash
 git clone https://github.com/ahmadraza2730/roshni-quantum-loadshedding.git
