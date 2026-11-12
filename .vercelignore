@@ -1,0 +1,5 @@
+src/
+*.py
+requirements.txt
+*.bat
+docs/build_report.js
